@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Forum;
+use App\Models\ForumComment;
+use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use App\Models\Forum;
-use App\Models\ForumComment;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -50,5 +51,15 @@ class User extends Authenticatable
 
     public function forumComments() {
         return $this->hasMany(ForumComment::class);
+    }
+
+    public function getJWTIdentifier()
+    {
+     return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }
