@@ -62,7 +62,7 @@ class ForumController extends Controller
             'slug' => Str::slug(request('title'), '-') . '-' . time(),
         ]);
 
-        //generate token, auto login, atau hanya response berhasil
+        //response berhasil
         return response()->json(['message' => 'Successfully posted']);
     }
 
@@ -112,7 +112,7 @@ class ForumController extends Controller
             'category' => request('category'),
         ]);
 
-        //generate token, auto login, atau hanya response berhasil
+        //response berhasil
         return response()->json(['message' => 'Successfully updated']);
     }
 
@@ -133,6 +133,20 @@ class ForumController extends Controller
      */
     public function destroy($id)
     {
-        //
+        //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk hapus data forum yang telah dibuat sebelumnya
+        $forum = Forum::find($id);
+
+        try {
+            $user = auth()->userOrFail();
+        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
+            return response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu']);
+        }
+        
+        if($user->id != $forum->user_id)
+            //ketika id di table forum berbeda dengan id pembuat data nya maka kita akan return 403 response
+            return response()->json(['message' => 'Not Authorized'], 403);
+
+        $forum->delete();
+        return response()->json(['message' => 'Successfully deleted']);
     }
 }
