@@ -43,23 +43,9 @@ class ForumController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make(request()->all(), [
-            'title' => 'required|min:5',
-            'body' => 'required|min:10',
-            'category' => 'required',
-        ]);
+        $this->validateRequest();
 
-        if($validator->fails()){
-            return response()->json($validator->messages());
-        }
-
-        
-        
-        try {
-            $user = auth()->userOrFail();
-        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
-            return response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu']);
-        }
+        $user = $this->getAuthUser();
 
         $user->forums()->create([
             'title' => request('title'),
@@ -68,7 +54,7 @@ class ForumController extends Controller
             'slug' => Str::slug(request('title'), '-') . '-' . time(),
         ]);
 
-        //generate token, auto login, atau hanya response berhasil
+        //response berhasil
         return response()->json(['message' => 'Successfully posted']);
     }
 
@@ -93,7 +79,22 @@ class ForumController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validateRequest();
+
+        $user = $this->getAuthUser();
+        //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk update data forum yang telah dibuat sebelumnya
+        $forum = Forum::find($id);
+
+        $this->checkOwnership($user->id, $forum->user_id);
+
+        $forum->update([
+            'title' => request('title'),
+            'body' => request('body'),
+            'category' => request('category'),
+        ]);
+
+        //response berhasil
+        return response()->json(['message' => 'Successfully updated']);
     }
 
     /**
@@ -104,6 +105,49 @@ class ForumController extends Controller
      */
     public function destroy($id)
     {
-        //
+        //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk hapus data forum yang telah dibuat sebelumnya
+        $forum = Forum::find($id);
+
+        $user = $this->getAuthUser();
+        
+        $this->checkOwnership($user->id, $forum->user_id);
+
+        $forum->delete();
+        return response()->json(['message' => 'Successfully deleted']);
+    }
+
+    private function validateRequest()
+    {
+        $validator = Validator::make(request()->all(), [
+            'title' => 'required|min:5',
+            'body' => 'required|min:10',
+            'category' => 'required',
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->messages())->send();
+            exit;
+        }
+    }
+
+    private function getAuthUser()
+    {
+        try {
+            return auth()->userOrFail();
+        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
+            response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu'])->send();
+            exit;
+        }
+    }
+
+    private function checkOwnership($authUser, $owner)
+    {
+        if($authUser != $owner)
+        {
+            //ketika id di table forum berbeda dengan id pembuat data nya maka kita akan return 403 response
+            response()->json(['message' => 'Not Authorized'], 403)->send();
+            exit;
+        }
+        //ketika dapat id nya maka saya melakukan action terhadap data forum tsb
     }
 }
