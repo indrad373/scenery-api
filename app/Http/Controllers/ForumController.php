@@ -22,8 +22,17 @@ class ForumController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
-        //
+    {   
+        /*
+        * get all forum data
+        *   return Forum::all();
+        **/
+
+        //get forum data with user who create the data eg: user with id 1, it will show details about user with id 1
+        //return Forum::with('user')->get();
+
+        //kita buat lebih simple lagi user data yang akan kita tampilkan
+        return Forum::with('user:id,username')->get();
     }
 
     /**
@@ -69,9 +78,10 @@ class ForumController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+     //menampilkan salah 1 data
     public function show($id)
     {
-        //
+        return Forum::with('user:id,username')->find($id);
     }
 
     /**
