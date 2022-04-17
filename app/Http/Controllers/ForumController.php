@@ -43,23 +43,9 @@ class ForumController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make(request()->all(), [
-            'title' => 'required|min:5',
-            'body' => 'required|min:10',
-            'category' => 'required',
-        ]);
-
-        if($validator->fails()){
-            return response()->json($validator->messages());
-        }
-
+        $this->validationAttribute($request);
+        $user = $this->getAuthUser();
         
-        
-        try {
-            $user = auth()->userOrFail();
-        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
-            return response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu']);
-        }
 
         $user->forums()->create([
             'title' => request('title'),
@@ -93,7 +79,43 @@ class ForumController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), $this->getValidationAttribute());
+
+        if($validator->fails()){
+            return response()->json($validator->messages());
+        }
+
+        $user = $this->getAuthUser();
+
+        //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk update data forum yang telah dibuat sebelumnya
+
+        //ketika dapat id nya maka saya update forum tsb
+        Forum::find($id)->update([
+            'title' => request('title'),
+            'body' => request('body'),
+            'category' => request('category'),
+        ]);
+
+        //generate token, auto login, atau hanya response berhasil
+        return response()->json(['message' => 'Successfully updated']);
+    }
+
+    private function getValidationAttribute()
+    {
+        return [
+            'title' => 'required|min:5',
+            'body' => 'required|min:10',
+            'category' => 'required',
+        ];
+    }
+
+    private function getAuthUser()
+    {
+        try {
+            return auth()->userOrFail();
+        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
+            return response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu']);
+        }
     }
 
     /**
