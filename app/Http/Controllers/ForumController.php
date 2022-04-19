@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Forum;
+use App\Http\Controllers\AuthUserTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ForumController extends Controller
 {
+
+    use AuthUserTrait;
 
     public function __construct()
     {
@@ -32,7 +35,7 @@ class ForumController extends Controller
         //return Forum::with('user')->get();
 
         //kita buat lebih simple lagi user data yang akan kita tampilkan
-        return Forum::with('user:id,username')->get();
+        return Forum::with('user:id,username', 'comments.user:id,username')->get();
     }
 
     /**
@@ -67,7 +70,7 @@ class ForumController extends Controller
      //menampilkan salah 1 data
     public function show($id)
     {
-        return Forum::with('user:id,username')->find($id);
+        return Forum::with('user:id,username', 'comments.user:id,username')->find($id);
     }
 
     /**
@@ -126,16 +129,6 @@ class ForumController extends Controller
 
         if($validator->fails()){
             return response()->json($validator->messages())->send();
-            exit;
-        }
-    }
-
-    private function getAuthUser()
-    {
-        try {
-            return auth()->userOrFail();
-        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
-            response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu'])->send();
             exit;
         }
     }
