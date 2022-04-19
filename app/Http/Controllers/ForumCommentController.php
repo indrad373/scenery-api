@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Http\Controllers\AuthUserTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\ForumComment;
 
 class ForumCommentController extends Controller
 {
@@ -44,21 +46,10 @@ class ForumCommentController extends Controller
             'body' => 'required',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return response()->json($validator->messages())->send();
             exit;
         }
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
@@ -68,9 +59,25 @@ class ForumCommentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $forumId, $commentId)
     {
-        //
+        $this->validateRequest();
+
+        //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk update data forum yang telah dibuat sebelumnya
+        $forumComment = ForumComment::find($commentId);
+
+        //check user id dari auth user, apakah authorize atau tidak di AuthUserTrait
+        $this->checkOwnership($forumComment->user_id);
+
+        $forumComment->update([
+            'body' => request('body'),
+        ]);
+
+        //response berhasil
+        return response()->json([
+            'code' => 200,
+            'message' => 'Comment successfully updated'
+        ]);
     }
 
     /**
@@ -79,8 +86,18 @@ class ForumCommentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($forumId, $commentId)
     {
-        //
+        //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk hapus data comment yang telah dibuat sebelumnya
+        $forumComment = ForumComment::find($commentId);
+
+        //sama seperti check ownership di update func 
+        $this->checkOwnership($forumComment->user_id);
+
+        $forumComment->delete();
+        return response()->json([
+            'code' => 200,
+            'message' => 'Comment successfully deleted'
+        ]);
     }
 }
