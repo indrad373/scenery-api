@@ -58,7 +58,10 @@ class ForumController extends Controller
         ]);
 
         //response berhasil
-        return response()->json(['message' => 'Successfully posted']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Successfully posted'
+        ]);
     }
 
     /**
@@ -97,7 +100,10 @@ class ForumController extends Controller
         ]);
 
         //response berhasil
-        return response()->json(['message' => 'Successfully updated']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Successfully updated'
+        ]);
     }
 
     /**
@@ -115,7 +121,10 @@ class ForumController extends Controller
         $this->checkOwnership($forum->user_id);
 
         $forum->delete();
-        return response()->json(['message' => 'Successfully deleted']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Forum successfully deleted'
+        ]);
     }
 
     private function validateRequest()
