@@ -84,11 +84,11 @@ class ForumController extends Controller
     {
         $this->validateRequest();
 
-        $user = $this->getAuthUser();
         //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk update data forum yang telah dibuat sebelumnya
         $forum = Forum::find($id);
 
-        $this->checkOwnership($user->id, $forum->user_id);
+        //check user id dari auth user, apakah authorize atau tidak di AuthUserTrait
+        $this->checkOwnership($forum->user_id);
 
         $forum->update([
             'title' => request('title'),
@@ -110,10 +110,9 @@ class ForumController extends Controller
     {
         //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk hapus data forum yang telah dibuat sebelumnya
         $forum = Forum::find($id);
-
-        $user = $this->getAuthUser();
         
-        $this->checkOwnership($user->id, $forum->user_id);
+        //sama seperti check ownership di update func 
+        $this->checkOwnership($forum->user_id);
 
         $forum->delete();
         return response()->json(['message' => 'Successfully deleted']);
@@ -131,16 +130,5 @@ class ForumController extends Controller
             return response()->json($validator->messages())->send();
             exit;
         }
-    }
-
-    private function checkOwnership($authUser, $owner)
-    {
-        if($authUser != $owner)
-        {
-            //ketika id di table forum berbeda dengan id pembuat data nya maka kita akan return 403 response
-            response()->json(['message' => 'Not Authorized'], 403)->send();
-            exit;
-        }
-        //ketika dapat id nya maka saya melakukan action terhadap data forum tsb
     }
 }

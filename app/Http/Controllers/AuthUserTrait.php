@@ -14,4 +14,17 @@ trait AuthUserTrait
             exit;
         }
     }
+
+    private function checkOwnership($owner)
+    {
+        //usernya kita dapetin dari getAuthUser func
+        $user = $this->getAuthUser();
+
+        if($user->id != $owner)
+        {
+            //ketika id di table forum berbeda dengan id pembuat data nya maka kita akan return 403 response
+            response()->json(['message' => 'Not Authorized'], 403)->send();
+            exit;
+        }
+    }
 }
