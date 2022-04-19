@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Forum;
+use App\Http\Controllers\AuthUserTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ForumController extends Controller
 {
+
+    use AuthUserTrait;
 
     public function __construct()
     {
@@ -32,7 +35,7 @@ class ForumController extends Controller
         //return Forum::with('user')->get();
 
         //kita buat lebih simple lagi user data yang akan kita tampilkan
-        return Forum::with('user:id,username')->get();
+        return Forum::with('user:id,username', 'comments.user:id,username')->get();
     }
 
     /**
@@ -55,7 +58,10 @@ class ForumController extends Controller
         ]);
 
         //response berhasil
-        return response()->json(['message' => 'Successfully posted']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Successfully posted'
+        ]);
     }
 
     /**
@@ -67,7 +73,7 @@ class ForumController extends Controller
      //menampilkan salah 1 data
     public function show($id)
     {
-        return Forum::with('user:id,username')->find($id);
+        return Forum::with('user:id,username', 'comments.user:id,username')->find($id);
     }
 
     /**
@@ -81,11 +87,11 @@ class ForumController extends Controller
     {
         $this->validateRequest();
 
-        $user = $this->getAuthUser();
         //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk update data forum yang telah dibuat sebelumnya
         $forum = Forum::find($id);
 
-        $this->checkOwnership($user->id, $forum->user_id);
+        //check user id dari auth user, apakah authorize atau tidak di AuthUserTrait
+        $this->checkOwnership($forum->user_id);
 
         $forum->update([
             'title' => request('title'),
@@ -94,7 +100,10 @@ class ForumController extends Controller
         ]);
 
         //response berhasil
-        return response()->json(['message' => 'Successfully updated']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Successfully updated'
+        ]);
     }
 
     /**
@@ -107,13 +116,15 @@ class ForumController extends Controller
     {
         //check ownership (authorize) untuk memastikan user mana yang mempunyai hak untuk hapus data forum yang telah dibuat sebelumnya
         $forum = Forum::find($id);
-
-        $user = $this->getAuthUser();
         
-        $this->checkOwnership($user->id, $forum->user_id);
+        //sama seperti check ownership di update func 
+        $this->checkOwnership($forum->user_id);
 
         $forum->delete();
-        return response()->json(['message' => 'Successfully deleted']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Forum successfully deleted'
+        ]);
     }
 
     private function validateRequest()
@@ -128,26 +139,5 @@ class ForumController extends Controller
             return response()->json($validator->messages())->send();
             exit;
         }
-    }
-
-    private function getAuthUser()
-    {
-        try {
-            return auth()->userOrFail();
-        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
-            response()->json(['message' => 'Unauthorized, anda harus login terlebih dahulu'])->send();
-            exit;
-        }
-    }
-
-    private function checkOwnership($authUser, $owner)
-    {
-        if($authUser != $owner)
-        {
-            //ketika id di table forum berbeda dengan id pembuat data nya maka kita akan return 403 response
-            response()->json(['message' => 'Not Authorized'], 403)->send();
-            exit;
-        }
-        //ketika dapat id nya maka saya melakukan action terhadap data forum tsb
     }
 }
