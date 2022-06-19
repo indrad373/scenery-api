@@ -4,8 +4,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Regist;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\RegisterController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -27,7 +29,11 @@ Route::group(['middleware' => 'api'], function($router){
         Route::post('me', [AuthController::class, 'me']);
     });
 
+
+    // Route::resource('blogs', BlogController::class);
+    Route::post('blogs/{id}', [BlogController::class, 'update']);
     Route::apiResource('forums', 'ForumController');
     Route::apiResource('forums.comments', 'ForumCommentController');
+    Route::resource('blogs', [BlogController::class]);
     //forums/{idforum}/comments/{idcomment}
 });
