@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 
@@ -28,7 +27,6 @@ class AuthController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
-
         return $this->respondWithToken($token);
     }
 
@@ -47,9 +45,9 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        auth()->logout();
+        // auth()->logout();
 
-        return response()->json(['message' => 'Successfully logged out']);
+        // return response()->json(['message' => 'Successfully logged out']);
     }
 
     //refresh sebuah token
@@ -58,7 +56,8 @@ class AuthController extends Controller
      */
     public function refresh()
     {
-        return $this->respondWithToken(auth()->refresh());
+        //true pertama itu force blacklist token yang sebelumnya, dan yang kedua generate token yang baru.
+        return $this->respondWithToken(auth()->refresh(true, true));
     }
 
     /**
